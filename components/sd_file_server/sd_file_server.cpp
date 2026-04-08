@@ -18,7 +18,7 @@ void SDFileServer::dump_config() {
   ESP_LOGCONFIG(TAG, "  Address: %s:%u", network::get_use_address(), this->base_->get_port());
   ESP_LOGCONFIG(TAG, "  Url Prefix: %s", this->url_prefix_.c_str());
   ESP_LOGCONFIG(TAG, "  Root Path: %s", this->root_path_.c_str());
-  ESP_LOGCONFIG(TAG, "  Deletation Enabled: %s", TRUEFALSE(this->deletion_enabled_));
+  ESP_LOGCONFIG(TAG, "  Deletion Enabled: %s", TRUEFALSE(this->deletion_enabled_));
   ESP_LOGCONFIG(TAG, "  Download Enabled : %s", TRUEFALSE(this->download_enabled_));
   ESP_LOGCONFIG(TAG, "  Upload Enabled : %s", TRUEFALSE(this->upload_enabled_));
 }
@@ -47,7 +47,9 @@ void SDFileServer::handleRequest(AsyncWebServerRequest *request) {
   }
   // Handle HTTP_POST with param for esp-idf framework as fallback for the missing HTTP_DELETE
   if (request->method() == HTTP_POST) {
-    if (request->hasParam("delete", true) && request->getParam("delete")->value() == "1") {
+    ESP_LOGD(TAG, "POST with params: %d", request->params());
+    if (request->hasParam("delete") &&
+        request->getParam("delete")->value() == "1") {
       this->handle_delete(request);
       return;
     }
