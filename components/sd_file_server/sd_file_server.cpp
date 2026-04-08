@@ -163,7 +163,7 @@ void SDFileServer::handle_index(AsyncWebServerRequest *request, std::string cons
   <head>
     <meta charset=UTF-8>
     <meta name=viewport content="width=device-width, initial-scale=1,user-scalable=no">
-    <title>SD Card Files</title>
+    <title>SD Card Files v2</title>
     <style>
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
@@ -303,11 +303,12 @@ void SDFileServer::handle_index(AsyncWebServerRequest *request, std::string cons
                     "<th>Type</th>"
                     "<th>Size</th>"
                     "<th>Actions</th>"
-                    "</tr></thead><tbody>");
+                    "</tr></thead>\n<tbody>");
 
   auto entries = this->sd_mmc_card_->list_directory_file_info(path, 0);
-  for (auto const &entry : entries)
+  for (auto const &entry : entries) {
     write_row(response, entry);
+  }
 
   response->print("</tbody></table>"
                     "<script>\n"
