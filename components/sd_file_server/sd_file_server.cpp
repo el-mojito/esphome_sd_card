@@ -47,7 +47,7 @@ void SDFileServer::handleRequest(AsyncWebServerRequest *request) {
   }
   // Handle HTTP_POST with param for esp-idf framework as fallback for the missing HTTP_DELETE
   if (request->method() == HTTP_POST) {
-    if (request->hasParam("delete") && request->getParam("delete")->value() == "1") {
+    if (request->hasParam("delete", true) && request->getParam("delete")->value() == "1") {
       this->handle_delete(request);
       return;
     }
@@ -58,14 +58,14 @@ void SDFileServer::handleRequest(AsyncWebServerRequest *request) {
 void SDFileServer::handleUpload(AsyncWebServerRequest *request, const std::string &filename, size_t index, uint8_t *data,
                                 size_t len, bool final) {
   if (!this->upload_enabled_) {
-    request->send(401, "application/json", "{ \"error\": \"file upload is disabled\" }");
+    request->send(403, "application/json", "{ \"error\": \"file upload is disabled\" }");
     return;
   }
   std::string extracted = this->extract_path_from_url(std::string(request->url().c_str()));
   std::string path = this->build_absolute_path(extracted);
 
   if (index == 0 && !this->sd_mmc_card_->is_directory(path)) {
-    auto response = request->beginResponse(401, "application/json", "{ \"error\": \"invalid upload folder\" }");
+    auto response = request->beginResponse(400, "application/json", "{ \"error\": \"invalid upload folder\" }");
     response->addHeader("Connection", "close");
     request->send(response);
     return;
@@ -150,7 +150,7 @@ void SDFileServer::write_row(AsyncResponseStream *response, sd_mmc_card::FileInf
       response->print("')\">Delete</button>");
     }
   }
-  response->print("<div></td></tr>");
+  response->print("</div></td></tr>\n");
 }
 
 void SDFileServer::handle_index(AsyncWebServerRequest *request, std::string const &path) const {
@@ -311,20 +311,18 @@ void SDFileServer::handle_index(AsyncWebServerRequest *request, std::string cons
                     "<script>\n"
                     "function delete_file(path) {\n"
                     "  fetch(path, { method: \"DELETE\" })\n"
-                    "  .then(res => {\n"
-                    "    // If DELETE fails (ESP-IDF), fallback to POST with parameter\n"
-                    "    if (!res.ok) {\n"
+                    "  .then(() => {\n"
+                    "    // Always try POST fallback (ESP-IDF safe)\n"
                     "      return fetch(path + \"?delete=1\", { method: \"POST\" });\n"
-                    "    }\n"
-                    "    return res;\n"
                     "  })\n"
                     "  .then(res => {\n"
                     "    if (!res.ok) throw new Error(\"Delete failed\");\n"
                     "    location.reload();\n"
                     "  })\n"
-                    "  .catch(err => {\n"
-                    "    console.error(err);\n"
-                    "  });\n"
+                    "  .catch(console.error);\n"
+                    "}\n"
+                    "function addDeleteParam(path) {\n"
+                    "  return path.includes('?') ? path + '&delete=1' : path + '?delete=1';\n"
                     "}\n"
                     "function download_file(path, filename) {\n"
                     "fetch(path).then(response => response.blob())\n"
@@ -343,13 +341,13 @@ void SDFileServer::handle_index(AsyncWebServerRequest *request, std::string cons
 
 void SDFileServer::handle_download(AsyncWebServerRequest *request, std::string const &path) const {
   if (!this->download_enabled_) {
-    request->send(401, "application/json", "{ \"error\": \"file download is disabled\" }");
+    request->send(403, "application/json", "{ \"error\": \"file download is disabled\" }");
     return;
   }
 
   auto file = this->sd_mmc_card_->read_file(path);
   if (file.size() == 0) {
-    request->send(401, "application/json", "{ \"error\": \"failed to read file\" }");
+    request->send(500, "application/json", "{ \"error\": \"failed to read file\" }");
     return;
   }
 #ifdef USE_ESP_IDF
@@ -364,20 +362,20 @@ void SDFileServer::handle_download(AsyncWebServerRequest *request, std::string c
 
 void SDFileServer::handle_delete(AsyncWebServerRequest *request) {
   if (!this->deletion_enabled_) {
-    request->send(401, "application/json", "{ \"error\": \"file deletion is disabled\" }");
+    request->send(403, "application/json", "{ \"error\": \"file deletion is disabled\" }");
     return;
   }
   std::string extracted = this->extract_path_from_url(std::string(request->url().c_str()));
   std::string path = this->build_absolute_path(extracted);
   if (this->sd_mmc_card_->is_directory(path)) {
-    request->send(401, "application/json", "{ \"error\": \"cannot delete a directory\" }");
+    request->send(403, "application/json", "{ \"error\": \"cannot delete a directory\" }");
     return;
   }
   if (this->sd_mmc_card_->delete_file(path)) {
     request->send(204, "application/json", "{}");
     return;
   }
-  request->send(401, "application/json", "{ \"error\": \"failed to delete file\" }");
+  request->send(500, "application/json", "{ \"error\": \"failed to delete file\" }");
 }
 
 std::string SDFileServer::build_prefix() const {
