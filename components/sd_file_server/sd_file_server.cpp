@@ -47,7 +47,6 @@ void SDFileServer::handleRequest(AsyncWebServerRequest *request) {
   }
   // Handle HTTP_POST with param for esp-idf framework as fallback for the missing HTTP_DELETE
   if (request->method() == HTTP_POST) {
-    ESP_LOGD(TAG, "POST with params: %d", request->params());
     if (request->hasParam("delete") &&
         request->getParam("delete")->value() == "1") {
       this->handle_delete(request);
