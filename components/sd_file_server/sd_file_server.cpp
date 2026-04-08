@@ -46,11 +46,13 @@ void SDFileServer::handleRequest(AsyncWebServerRequest *request) {
     return;
   }
   // Handle HTTP_POST with param for esp-idf framework as fallback for the missing HTTP_DELETE
-  if (request->method() == HTTP_POST && request->hasParam("delete")) {
-    this->handle_delete(request);
-    return;
+  if (request->method() == HTTP_POST) {
+    if (request->hasParam("delete") && request->getParam("delete")->value() == "1") {
+      this->handle_delete(request);
+      return;
+    }
   }
-
+  ESP_LOGD(TAG, "unsupported method %u", request->method());
 }
 
 void SDFileServer::handleUpload(AsyncWebServerRequest *request, const std::string &filename, size_t index, uint8_t *data,
@@ -306,33 +308,33 @@ void SDFileServer::handle_index(AsyncWebServerRequest *request, std::string cons
     write_row(response, entry);
 
   response->print("</tbody></table>"
-                    "<script>"
-                    "function delete_file(path) {"
-                    "fetch(path, { method: \"DELETE\" })"
-                    ".then(res => {"
-                    "  // If DELETE fails (ESP-IDF), fallback to POST with parameter"
-                    "  if (!res.ok) {"
-                    "    return fetch(path + \"?delete=1\", { method: \"POST\" });"
-                    "  }"
-                    "  return res;"
-                    "})"
-                    ".then(res => {"
-                    "  if (!res.ok) throw new Error(\"Delete failed\");"
-                    "  location.reload();"
-                    "})"
-                    ".catch(err => {"
-                    "  console.error(err);"
-                    "});"
-                    "}"
-                    "function download_file(path, filename) {"
-                    "fetch(path).then(response => response.blob())"
-                    ".then(blob => {"
-                    "const link = document.createElement('a');"
-                    "link.href = URL.createObjectURL(blob);"
-                    "link.download = filename;"
-                    "link.click();"
-                    "}).catch(console.error);"
-                    "} "
+                    "<script>\n"
+                    "function delete_file(path) {\n"
+                    "  fetch(path, { method: \"DELETE\" })\n"
+                    "  .then(res => {\n"
+                    "    // If DELETE fails (ESP-IDF), fallback to POST with parameter\n"
+                    "    if (!res.ok) {\n"
+                    "      return fetch(path + \"?delete=1\", { method: \"POST\" });\n"
+                    "    }\n"
+                    "    return res;\n"
+                    "  })\n"
+                    "  .then(res => {\n"
+                    "    if (!res.ok) throw new Error(\"Delete failed\");\n"
+                    "    location.reload();\n"
+                    "  })\n"
+                    "  .catch(err => {\n"
+                    "    console.error(err);\n"
+                    "  });\n"
+                    "}\n"
+                    "function download_file(path, filename) {\n"
+                    "fetch(path).then(response => response.blob())\n"
+                    ".then(blob => {\n"
+                    "const link = document.createElement('a');\n"
+                    "link.href = URL.createObjectURL(blob);\n"
+                    "link.download = filename;\n"
+                    "link.click();\n"
+                    "}).catch(console.error);\n"
+                    "}\n"
                     "</script>"
                     "</body></html>");
 
