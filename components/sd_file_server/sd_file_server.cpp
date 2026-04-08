@@ -31,16 +31,26 @@ bool SDFileServer::canHandle(AsyncWebServerRequest *request) const {
 
 void SDFileServer::handleRequest(AsyncWebServerRequest *request) {
   ESP_LOGD(TAG, "%s", request->url().c_str());
-  if (str_startswith(std::string(request->url().c_str()), this->build_prefix())) {
-    if (request->method() == HTTP_GET) {
-      this->handle_get(request);
-      return;
-    }
-    if (request->method() == HTTP_DELETE) {
-      this->handle_delete(request);
-      return;
-    }
+  if (!str_startswith(std::string(request->url().c_str()), this->build_prefix())) {
+    return;
   }
+
+  // Handle HTTP_GET
+  if (request->method() == HTTP_GET) {
+    this->handle_get(request);
+    return;
+  }
+  // Handle HTTP_DELETE -> this only works with Arduino framework
+  if (request->method() == HTTP_DELETE) {
+    this->handle_delete(request);
+    return;
+  }
+  // Handle HTTP_POST with param for esp-idf framework as fallback for the missing HTTP_DELETE
+  if (request->method() == HTTP_POST && request->hasParam("delete")) {
+    this->handle_delete(request);
+    return;
+  }
+
 }
 
 void SDFileServer::handleUpload(AsyncWebServerRequest *request, const std::string &filename, size_t index, uint8_t *data,
@@ -297,7 +307,23 @@ void SDFileServer::handle_index(AsyncWebServerRequest *request, std::string cons
 
   response->print("</tbody></table>"
                     "<script>"
-                    "function delete_file(path) {fetch(path, {method: \"DELETE\"});}"
+                    "function delete_file(path) {"
+                    "fetch(path, { method: \"DELETE\" })"
+                    ".then(res => {"
+                    "  // If DELETE fails (ESP-IDF), fallback to POST with parameter"
+                    "  if (!res.ok) {"
+                    "    return fetch(path + \"?delete=1\", { method: \"POST\" });"
+                    "  }"
+                    "  return res;"
+                    "})"
+                    ".then(res => {"
+                    "  if (!res.ok) throw new Error(\"Delete failed\");"
+                    "  location.reload();"
+                    "})"
+                    ".catch(err => {"
+                    "  console.error(err);"
+                    "});"
+                    "}"
                     "function download_file(path, filename) {"
                     "fetch(path).then(response => response.blob())"
                     ".then(blob => {"
