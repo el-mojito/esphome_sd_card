@@ -313,7 +313,7 @@ void SDFileServer::handle_index(AsyncWebServerRequest *request, std::string cons
                     "  fetch(path, { method: \"DELETE\" })\n"
                     "  .then(() => {\n"
                     "    // Always try POST fallback (ESP-IDF safe)\n"
-                    "      return fetch(path + \"?delete=1\", { method: \"POST\" });\n"
+                    "      return fetch(addDeleteParam(path), { method: \"POST\" });\n"
                     "  })\n"
                     "  .then(res => {\n"
                     "    if (!res.ok) throw new Error(\"Delete failed\");\n"
