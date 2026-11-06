@@ -25,15 +25,15 @@ void SDFileServer::dump_config() {
 
 bool SDFileServer::canHandle(AsyncWebServerRequest *request) const {
   char url_buf[AsyncWebServerRequest::URL_BUF_SIZE];
-  ESP_LOGD(TAG, "can handle %s %u", request->url_to(url_buf),
-           str_startswith(std::string(request->url_to(url_buf)), this->build_prefix()));
-  return str_startswith(std::string(request->url_to(url_buf))), this->build_prefix());
+  ESP_LOGD(TAG, "can handle %s %u", request->url_to(url_buf).c_str(),
+           str_startswith(request->url_to(url_buf).str(), this->build_prefix()));
+  return str_startswith(request->url_to(url_buf).str(), this->build_prefix());
 }
 
 void SDFileServer::handleRequest(AsyncWebServerRequest *request) {
   char url_buf[AsyncWebServerRequest::URL_BUF_SIZE];
-  ESP_LOGD(TAG, "%s", request->url_to(url_buf));
-  if (!str_startswith(std::string(request->url_to(url_buf)), this->build_prefix())) {
+  ESP_LOGD(TAG, "%s", request->url_to(url_buf).c_str());
+  if (!str_startswith(request->url_to(url_buf).str(), this->build_prefix())) {
     return;
   }
 
@@ -65,7 +65,7 @@ void SDFileServer::handleUpload(AsyncWebServerRequest *request, const std::strin
     return;
   }
   char url_buf[AsyncWebServerRequest::URL_BUF_SIZE];
-  std::string extracted = this->extract_path_from_url(std::string(request->url_to(url_buf)));
+  std::string extracted = this->extract_path_from_url(request->url_to(url_buf).str());
   std::string path = this->build_absolute_path(extracted);
 
   if (index == 0 && !this->sd_mmc_card_->is_directory(path)) {
@@ -103,7 +103,7 @@ void SDFileServer::set_upload_enabled(bool allow) { this->upload_enabled_ = allo
 
 void SDFileServer::handle_get(AsyncWebServerRequest *request) const {
   char url_buf[AsyncWebServerRequest::URL_BUF_SIZE];
-  std::string extracted = this->extract_path_from_url(std::string(request->url_to(url_buf)));
+  std::string extracted = this->extract_path_from_url(request->url_to(url_buf).str());
   std::string path = this->build_absolute_path(extracted);
 
   if (!this->sd_mmc_card_->is_directory(path)) {
@@ -372,7 +372,7 @@ void SDFileServer::handle_delete(AsyncWebServerRequest *request) {
     return;
   }
   char url_buf[AsyncWebServerRequest::URL_BUF_SIZE];
-  std::string extracted = this->extract_path_from_url(std::string(request->url_to(url_buf)));
+  std::string extracted = this->extract_path_from_url(request->url_to(url_buf).str());
   std::string path = this->build_absolute_path(extracted);
   if (this->sd_mmc_card_->is_directory(path)) {
     request->send(403, "application/json", "{ \"error\": \"cannot delete a directory\" }");
