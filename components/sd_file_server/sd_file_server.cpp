@@ -25,15 +25,15 @@ void SDFileServer::dump_config() {
 
 bool SDFileServer::canHandle(AsyncWebServerRequest *request) const {
   char url_buf[AsyncWebServerRequest::URL_BUF_SIZE];
-  ESP_LOGD(TAG, "can handle %s %u", request->url(url_buf).c_str(),
-           str_startswith(std::string(request->url(url_buf).c_str()), this->build_prefix()));
-  return str_startswith(std::string(request->url().c_str()), this->build_prefix());
+  ESP_LOGD(TAG, "can handle %s %u", request->url_to(url_buf).c_str(),
+           str_startswith(std::string(request->url_to(url_buf).c_str()), this->build_prefix()));
+  return str_startswith(std::string(request->url_to(url_buf).c_str()), this->build_prefix());
 }
 
 void SDFileServer::handleRequest(AsyncWebServerRequest *request) {
   char url_buf[AsyncWebServerRequest::URL_BUF_SIZE];
-  ESP_LOGD(TAG, "%s", request->url(url_buf).c_str());
-  if (!str_startswith(std::string(request->url(url_buf).c_str()), this->build_prefix())) {
+  ESP_LOGD(TAG, "%s", request->url_to(url_buf).c_str());
+  if (!str_startswith(std::string(request->url_to(url_buf).c_str()), this->build_prefix())) {
     return;
   }
 
@@ -65,7 +65,7 @@ void SDFileServer::handleUpload(AsyncWebServerRequest *request, const std::strin
     return;
   }
   char url_buf[AsyncWebServerRequest::URL_BUF_SIZE];
-  std::string extracted = this->extract_path_from_url(std::string(request->url(url_buf).c_str()));
+  std::string extracted = this->extract_path_from_url(std::string(request->url_to(url_buf).c_str()));
   std::string path = this->build_absolute_path(extracted);
 
   if (index == 0 && !this->sd_mmc_card_->is_directory(path)) {
