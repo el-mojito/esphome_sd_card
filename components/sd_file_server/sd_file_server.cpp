@@ -102,6 +102,7 @@ void SDFileServer::set_download_enabled(bool allow) { this->download_enabled_ = 
 void SDFileServer::set_upload_enabled(bool allow) { this->upload_enabled_ = allow; }
 
 void SDFileServer::handle_get(AsyncWebServerRequest *request) const {
+  /*
   char url_buf[AsyncWebServerRequest::URL_BUF_SIZE];
   std::string extracted = this->extract_path_from_url(request->url_to(url_buf).str());
   std::string path = this->build_absolute_path(extracted);
@@ -112,6 +113,11 @@ void SDFileServer::handle_get(AsyncWebServerRequest *request) const {
   }
 
   handle_index(request, path);
+  */
+
+  ESP_LOGD(TAG, "Test: handle_get reached");
+
+  request->send(200, "text/plain", "SD File Server is working");
 }
 
 void SDFileServer::write_row(AsyncResponseStream *response, sd_mmc_card::FileInfo const &info) const {
