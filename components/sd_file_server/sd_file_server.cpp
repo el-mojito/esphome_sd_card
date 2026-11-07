@@ -115,16 +115,14 @@ void SDFileServer::handle_get(AsyncWebServerRequest *request) const {
   std::string path = this->build_absolute_path(extracted);
   ESP_LOGD(TAG, "Path: %s", path.c_str());
 
-  /*if (!this->sd_mmc_card_->is_directory(path)) {
-    handle_download(request, path);
-    return;
-  }
+  //if (!this->sd_mmc_card_->is_directory(path)) {
+  //  handle_download(request, path);
+  //  return;
+  //}
 
-  handle_index(request, path);*/
+  handle_index(request, path);
 
-  //ESP_LOGD(TAG, "Test: handle_get reached");
-
-  request->send(200, "text/plain", "SD File Server is working");
+  //request->send(200, "text/plain", "SD File Server is working");
 }
 
 void SDFileServer::write_row(AsyncResponseStream *response, sd_mmc_card::FileInfo const &info) const {
