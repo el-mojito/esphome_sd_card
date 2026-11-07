@@ -14,7 +14,7 @@ SDFileServer::SDFileServer(web_server_base::WebServerBase *base) : base_(base) {
 void SDFileServer::setup() { this->base_->add_handler(this); }
 
 void SDFileServer::dump_config() {
-  char adr_buf[AsyncWebServerRequest::USE_ADDRESS_BUFFER_SIZE];
+  char adr_buf[network::USE_ADDRESS_BUFFER_SIZE];
   network::get_use_address_to(adr_buf);
   ESP_LOGCONFIG(TAG, "SD File Server:");
   ESP_LOGCONFIG(TAG, "  Address: %s:%u", adr_buf, this->base_->get_port());
