@@ -107,15 +107,15 @@ void SDFileServer::handle_get(AsyncWebServerRequest *request) const {
   ESP_LOGD(TAG, "Test: handle_get reached");
 
   char url_buf[AsyncWebServerRequest::URL_BUF_SIZE];
-  request->url_to(url_buf);
+  const auto url = request->url_to(url_buf);
   ESP_LOGD(TAG, "URL: %s", url_buf);
 
-  /*std::string extracted = this->extract_path_from_url(request->url_to(url_buf).str());
-  ESP_LOGD(TAG, "Test: %s", extracted.c_str());
+  std::string extracted = this->extract_path_from_url(url.str());
+  ESP_LOGD(TAG, "Extr: %s", extracted.c_str());
   std::string path = this->build_absolute_path(extracted);
   ESP_LOGD(TAG, "Path: %s", path.c_str());
 
-  if (!this->sd_mmc_card_->is_directory(path)) {
+  /*if (!this->sd_mmc_card_->is_directory(path)) {
     handle_download(request, path);
     return;
   }
