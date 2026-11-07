@@ -14,8 +14,10 @@ SDFileServer::SDFileServer(web_server_base::WebServerBase *base) : base_(base) {
 void SDFileServer::setup() { this->base_->add_handler(this); }
 
 void SDFileServer::dump_config() {
+  char adr_buf[AsyncWebServerRequest::USE_ADDRESS_BUFFER_SIZE];
+  network::get_use_address_to(adr_buf);
   ESP_LOGCONFIG(TAG, "SD File Server:");
-  //ESP_LOGCONFIG(TAG, "  Address: %s:%u", network::get_use_address(), this->base_->get_port());
+  ESP_LOGCONFIG(TAG, "  Address: %s:%u", adr_buf, this->base_->get_port());
   ESP_LOGCONFIG(TAG, "  Url Prefix: %s", this->url_prefix_.c_str());
   ESP_LOGCONFIG(TAG, "  Root Path: %s", this->root_path_.c_str());
   ESP_LOGCONFIG(TAG, "  Deletion Enabled: %s", TRUEFALSE(this->deletion_enabled_));
@@ -102,8 +104,13 @@ void SDFileServer::set_download_enabled(bool allow) { this->download_enabled_ = 
 void SDFileServer::set_upload_enabled(bool allow) { this->upload_enabled_ = allow; }
 
 void SDFileServer::handle_get(AsyncWebServerRequest *request) const {
+  ESP_LOGD(TAG, "Test: handle_get reached");
+
   char url_buf[AsyncWebServerRequest::URL_BUF_SIZE];
-  std::string extracted = this->extract_path_from_url(request->url_to(url_buf).str());
+  request->url_to(url_buf);
+  ESP_LOGD(TAG, "URL: %s", url_buf);
+
+  /*std::string extracted = this->extract_path_from_url(request->url_to(url_buf).str());
   ESP_LOGD(TAG, "Test: %s", extracted.c_str());
   std::string path = this->build_absolute_path(extracted);
   ESP_LOGD(TAG, "Path: %s", path.c_str());
@@ -113,11 +120,11 @@ void SDFileServer::handle_get(AsyncWebServerRequest *request) const {
     return;
   }
 
-  handle_index(request, path);
+  handle_index(request, path);*/
 
   //ESP_LOGD(TAG, "Test: handle_get reached");
 
-  //request->send(200, "text/plain", "SD File Server is working");
+  request->send(200, "text/plain", "SD File Server is working");
 }
 
 void SDFileServer::write_row(AsyncResponseStream *response, sd_mmc_card::FileInfo const &info) const {
